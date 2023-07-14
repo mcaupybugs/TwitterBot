@@ -14,4 +14,16 @@ File Structure
 
 3. main.py - The file that should be added cron schedule on. This script will stitch ever component together. Will get the tweet content from chatGPT module and also will take care of refreshing the authentication token. Everytime this script runs it will create a new tweet as user.
 
+Save the following variables as environment variables
+
+| Variable name | Value |
+----------------| -------- |
+| OPENAPI_KEY | Value of openAI key |
+| OPENAPI_ENDPOINT | Endpoint value of open API |
+| MODEL_NAME | Model name of your azure API | 
+| CLIENT_ID | Client ID for twitter Oauth2 | 
+| CLIENT_SECRET | Client secret for twitter Oauth2 |
+| REDIS_PASSWORD | Redis key for storage instance |
+| REDIRECT_URI | Redirect URL for twitter Oauth2 |
+
 ![Example](./static/tweetSS.png)
