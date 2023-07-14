@@ -49,5 +49,3 @@ def getEmotion():
 def getTopic():
     topics = ['books', 'technology', 'movies', 'hollywood', 'tv shows', 'cartoons', 'games', 'life', 'socrates', 'philosophy', 'songs', 'art', 'artist', 'jokes']
     return random.choice(topics)
-
-callGPT()
