@@ -14,4 +14,4 @@ File Structure
 
 3. main.py - The file that should be added cron schedule on. This script will stitch ever component together. Will get the tweet content from chatGPT module and also will take care of refreshing the authentication token. Everytime this script runs it will create a new tweet as user.
 
-![Example](static/tweetSS.png)
+![Example](/static/tweetSS.png)
