@@ -9,19 +9,16 @@ from requests.auth import AuthBase, HTTPBasicAuth
 from requests_oauthlib import OAuth2Session, TokenUpdated
 from flask import Flask, request, redirect, session, url_for, render_template
 
-r = redis.StrictRedis(host='twitterbot.redis.cache.windows.net', port=6379, db=0, password=os.environ.get("REDIS_PASSWORD"), ssl=False)
+r = redis.StrictRedis(host='twitterbot.redis.cache.windows.net', port=6380, db=0, password=os.environ.get("REDIS_PASSWORD"), ssl=True)
 
 app = Flask(__name__)
 app.secret_key = os.urandom(50)
-print(r)
 
 client_id = os.environ.get("CLIENT_ID")
-print(client_id)
 client_secret = os.environ.get("CLIENT_SECRET")
 auth_url = "https://twitter.com/i/oauth2/authorize"
 token_url = "https://api.twitter.com/2/oauth2/token"
 redirect_uri = os.environ.get("REDIRECT_URI")
-print(redirect_uri)
 
 scopes = ["tweet.read", "users.read", "tweet.write", "offline.access"]
 
@@ -35,7 +32,7 @@ code_challenge = code_challenge.replace("=", "")
 def make_token():
     return OAuth2Session(client_id, redirect_uri=redirect_uri, scope=scopes)
 
-def parse_dog_fact():
+def getTweet():
     url = "http://dog-api.kinduff.com/api/facts"
     dog_fact = requests.request("GET", url).json()
     return dog_fact["facts"][0]
@@ -56,35 +53,27 @@ def post_tweet(payload, token):
 def demo():
     global twitter
     twitter = make_token()
-    print(twitter)
     authorization_url, state = twitter.authorization_url(
         auth_url, code_challenge=code_challenge, code_challenge_method="S256"
     )
     authorization_url = authorization_url.replace("+","%20")
     authorization_url = authorization_url.replace("%E2%80%99","")
-    print(authorization_url)
     session["oauth_state"] = state
     return redirect(authorization_url)
 
 @app.route("/oauth/callback", methods=["GET"])
 def callback():
     code = request.args.get("code")
-    print(code)
     token = twitter.fetch_token(
         token_url=token_url,
         client_secret=client_secret,
         code_verifier=code_verifier,
         code=code,
-    )   
-    print(token)
+    )
     st_token = '"{}"'.format(token)
-    print(st_token)
     j_token = json.loads(st_token)
-    print(j_token)
     r.set("token", j_token)
-    print("run")
-    doggie_fact = parse_dog_fact()
-    payload = {"text": "{}".format(doggie_fact)}
+    payload = {"text": "WASSSAAAAPPPPP"}
     response = post_tweet(payload, token).json()
     return response
 
