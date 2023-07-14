@@ -10,10 +10,8 @@ client_secret = os.environ.get("CLIENT_SECRET")
 token_url = "https://api.twitter.com/2/oauth2/token"
 
 t = twitter_service.r.get("token")
-print(t)
 bb_t = t.decode("utf8").replace("'", '"')
 data = json.loads(bb_t)
-print(data)
 
 refreshed_token = twitter.refresh_token(
     client_id=client_id,
