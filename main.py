@@ -1,100 +1,31 @@
+import twitter_service
+import redis
 import os
-import requests
+import gpt_service
 import json
-import openai
-import random
-from requests_oauthlib import OAuth1Session
 
-openai.api_key = ""
-openai.api_base = "" # your endpoint should look like the following https://YOUR_RESOURCE_NAME.openai.azure.com/
-openai.api_type = 'azure'
-openai.api_version = '2023-03-15-preview' # this may change in the future
+twitter = twitter_service.make_token()
+client_id = os.environ.get("CLIENT_ID")
+client_secret = os.environ.get("CLIENT_SECRET")
+token_url = "https://api.twitter.com/2/oauth2/token"
 
-chatgpt_model_name='' #This will correspond to the custom name you chose for your deployment when you deployed a model. 
+t = twitter_service.r.get("token")
+print(t)
+bb_t = t.decode("utf8").replace("'", '"')
+data = json.loads(bb_t)
+print(data)
 
-# Send a completion call to generate an answer
-response = openai.ChatCompletion.create(
-                  engine=chatgpt_model_name,
-                  messages=[
-                        {"role": "system", "content": "You are a helpful assistant."},
-                        {"role": "user", "content": "What are the top trending keywords in tech. Please give keywords only '/' seperated and no extra text"}
-                    ]
-                )
-keywords = response['choices'][0]['message']['content']
-keywordsList = keywords.split('/')
-print(keywordsList)
-tweetMessageString = "Make a tweet on " + random.choice(keywordsList)
-print(tweetMessageString)
-tweetResponse = openai.ChatCompletion.create(
-                  engine=chatgpt_model_name,
-                  messages=[
-                        {"role": "system", "content": "You are a helpful assistant."},
-                        {"role": "user", "content": tweetMessageString}
-                    ]
-                    ,max_tokens=200
-                )
-print(tweetResponse['choices'][0]['message']['content'])
-
-tweet = tweetResponse['choices'][0]['message']['content']
-consumer_key = ""
-consumer_secret = ""
-
-payload = {"text" : tweet}
-
-# Get request token
-request_token_url = "https://api.twitter.com/oauth/request_token?oauth_callback=oob&x_auth_access_type=write"
-oauth = OAuth1Session(consumer_key, client_secret=consumer_secret)
-
-try:
-    fetch_response = oauth.fetch_request_token(request_token_url)
-except ValueError:
-    print(
-        "There may have been an issue with the consumer_key or consumer_secret you entered."
-    )
-
-resource_owner_key = fetch_response.get("oauth_token")
-resource_owner_secret = fetch_response.get("oauth_token_secret")
-print("Got OAuth token: %s" % resource_owner_key)
-
-# Get authorization
-base_authorization_url = "https://api.twitter.com/oauth/authorize"
-authorization_url = oauth.authorization_url(base_authorization_url)
-print("Please go here and authorize: %s" % authorization_url)
-verifier = input("Paste the PIN here: ")
-
-# Get the access token
-access_token_url = "https://api.twitter.com/oauth/access_token"
-oauth = OAuth1Session(
-    consumer_key,
-    client_secret=consumer_secret,
-    resource_owner_key=resource_owner_key,
-    resource_owner_secret=resource_owner_secret,
-    verifier=verifier,
-)
-oauth_tokens = oauth.fetch_access_token(access_token_url)
-
-access_token = oauth_tokens["oauth_token"]
-access_token_secret = oauth_tokens["oauth_token_secret"]
-
-# Make the request
-oauth = OAuth1Session(
-    consumer_key,
-    client_secret=consumer_secret,
-    resource_owner_key=access_token,
-    resource_owner_secret=access_token_secret,
+refreshed_token = twitter.refresh_token(
+    client_id=client_id,
+    client_secret=client_secret,
+    token_url=token_url,
+    refresh_token=data["refresh_token"],
 )
 
+st_refreshed_token = '"{}"'.format(refreshed_token)
+j_refreshed_token = json.loads(st_refreshed_token)
+twitter_service.r.set("token", j_refreshed_token)
 
-# Making the request
-response = oauth.post(
-    "https://api.twitter.com/2/tweets",
-    json=payload,
-)
-
-if response.status_code != 201:
-    raise Exception(
-        "Request returned an error: {} {}".format(response.status_code, response.text)
-    )
-
-print("Response code: {}".format(response.status_code))
-
+tweet = gpt_service.callGPT()
+payload = {"text": "{}".format(tweet)}
+twitter_service.post_tweet(payload, refreshed_token)
